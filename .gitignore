@@ -1,3 +1,14 @@
 .venv
 .env
 agent.py
+app.py
+
+ats-intelligence-backend/.env
+ats-intelligence-backend/__pycache__/
+
+
+
+ats-intelligence-frontend/node_modules
+ats-intelligence-frontend/dist
+ats-intelligence-frontend/.env.local
+
