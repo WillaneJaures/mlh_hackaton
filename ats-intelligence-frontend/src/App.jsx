@@ -9,6 +9,11 @@ const API_URL = (
   "https://project2-nu-lilac.vercel.app"
 ).replace(/\/+$/, "");
 
+const response = await fetch(`${API_URL}/api/analyze`, {
+  method: "POST",
+  body: formData,
+});
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 function App() {

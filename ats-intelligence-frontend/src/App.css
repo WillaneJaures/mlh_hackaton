@@ -549,6 +549,48 @@ textarea::placeholder {
     width: 100%;
   }
 
+  /* Bouton pour retirer le CV importé */
+  .remove-file-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    margin-top: 14px;
+    padding: 10px 16px;
+
+    background-color: #fff1f2;
+    color: #be123c;
+
+    border: 1px solid #fecdd3;
+    border-radius: 8px;
+
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  /* Effet au survol */
+  .remove-file-button:hover {
+    background-color: #ffe4e6;
+    border-color: #fda4af;
+    color: #9f1239;
+  }
+
+  /* Effet au clic */
+  .remove-file-button:active {
+    transform: scale(0.98);
+  }
+
+  /* Accessibilité au clavier */
+  .remove-file-button:focus-visible {
+    outline: 3px solid #fda4af;
+    outline-offset: 3px;
+  }
+
   .footer {
     align-items: start;
     flex-direction: column;
