@@ -26,13 +26,11 @@ function App() {
     formData.append("job_description", jobDescription);
     formData.append("cv", cv);
 
-    const response = await fetch(
-      "http://127.0.0.1:8000/api/analyze",
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
+    const API_URL = import.meta.env.VITE_API_URL;
+    const response = await fetch(`${API_URL}/api/analyze`, {
+      method: "POST",
+      body: formData,
+    });
 
     const data = await response.json();
 
