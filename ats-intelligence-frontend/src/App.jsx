@@ -27,7 +27,10 @@ function App() {
     formData.append("cv", cv);
 
     const API_URL = import.meta.env.VITE_API_URL;
-    
+
+    console.log("URL de l'API :", API_URL);
+    console.log("URL de la requête :", `${API_URL}/api/analyze`); 
+
     const response = await fetch(`${API_URL}/api/analyze`, {
       method: "POST",
       body: formData,
