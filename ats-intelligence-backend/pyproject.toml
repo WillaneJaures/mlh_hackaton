@@ -1,27 +1,18 @@
+
 [project]
 name = "ats-intelligence-backend"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-authors = [
-    { name = "Willane Jaures", email = "89950707+WillaneJaures@users.noreply.github.com" }
-]
-requires-python = ">=3.14"
+description = "Backend FastAPI for ATS Intelligence"
+requires-python = ">=3.12,<3.14"
 dependencies = [
-    "dotenv>=0.9.9",
-    "fastapi>=0.162.0",
-    "google>=3.0.0",
-    "google-genai>=2.33.0",
-    "pandas>=3.1.0",
-    "pypdf>=6.21.2",
-    "python-multipart>=0.0.32",
-    "streamlit>=1.66.1",
-    "uvicorn>=0.54.0",
+    "fastapi",
+    "uvicorn",
+    "python-multipart",
+    "google-genai",
+    "python-dotenv",
+    "pypdf",
+    "pandas",
 ]
 
-[project.scripts]
-mlh-hackaton = "ats-intelligence-backend:main"
-
-[build-system]
-requires = ["uv_build>=0.13.5,<0.14.0"]
-build-backend = "uv_build"
+[tool.uv]
+package = false
