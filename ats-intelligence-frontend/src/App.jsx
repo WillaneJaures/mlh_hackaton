@@ -2,6 +2,15 @@
 import { useState } from "react";
 import "./App.css";
 
+// URL du backend FastAPI.
+// En production, Vercel utilisera la variable VITE_API_URL.
+const API_URL = (
+  import.meta.env.VITE_API_URL ||
+  "https://project2-nu-lilac.vercel.app"
+).replace(/\/+$/, "");
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
 function App() {
   const [jobDescription, setJobDescription] = useState("");
   const [cv, setCv] = useState(null);
@@ -9,69 +18,139 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  function handleFileChange(event) {
+    const selectedFile = event.target.files?.[0];
+
+    setError("");
+
+    if (!selectedFile) {
+      setCv(null);
+      return;
+    }
+
+    const isPdf =
+      selectedFile.type === "application/pdf" ||
+      selectedFile.name.toLowerCase().endsWith(".pdf");
+
+    if (!isPdf) {
+      setCv(null);
+      setError("Veuillez sélectionner un fichier PDF valide.");
+      event.target.value = "";
+      return;
+    }
+
+    if (selectedFile.size > MAX_FILE_SIZE) {
+      setCv(null);
+      setError("Le CV ne doit pas dépasser 10 Mo.");
+      event.target.value = "";
+      return;
+    }
+
+    setCv(selectedFile);
+  }
+
   async function handleAnalyze(event) {
-  event.preventDefault();
-  setError("");
-  setAnalysis("");
+    event.preventDefault();
 
-  if (!jobDescription.trim() || !cv) {
-    setError("Ajoutez une fiche de poste et un CV PDF.");
-    return;
-  }
+    setError("");
+    setAnalysis("");
 
-  setLoading(true);
-
-  try {
-    const formData = new FormData();
-    formData.append("job_description", jobDescription);
-    formData.append("cv", cv);
-
-    const API_URL = import.meta.env.VITE_API_URL;
-
-    console.log("URL de l'API :", API_URL);
-    console.log("URL de la requête :", `${API_URL}/api/analyze`); 
-
-    const response = await fetch(`${API_URL}/api/analyze`, {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.detail || `Erreur HTTP ${response.status}`
-      );
+    if (!jobDescription.trim()) {
+      setError("Veuillez saisir une fiche de poste.");
+      return;
     }
 
-    if (!data.analysis) {
-      throw new Error(
-        "La réponse du serveur ne contient pas le rapport d'analyse."
-      );
+    if (!cv) {
+      setError("Veuillez importer le CV du candidat au format PDF.");
+      return;
     }
 
-    setAnalysis(data.analysis);
+    if (!API_URL) {
+      setError(
+        "L'adresse de l'API n'est pas configurée. Vérifiez VITE_API_URL."
+      );
+      return;
+    }
 
-  } catch (err) {
-    console.error("Erreur d'analyse :", err);
+    setLoading(true);
 
-    setError(
-      err instanceof TypeError
-        ? "Impossible de joindre l'API. Vérifiez l'adresse du serveur, CORS et que FastAPI est démarré."
-        : err.message
-    );
+    try {
+      const formData = new FormData();
+      formData.append("job_description", jobDescription.trim());
+      formData.append("cv", cv);
 
-  } finally {
-    setLoading(false);
+      const endpoint = `${API_URL}/api/analyze`;
+
+      console.info("URL de l'API :", API_URL);
+      console.info("Envoi de la requête :", endpoint);
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        body: formData,
+      });
+
+      const contentType = response.headers.get("content-type") || "";
+
+      let data;
+
+      if (contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        const responseText = await response.text();
+
+        throw new Error(
+          response.ok
+            ? "Le serveur a renvoyé une réponse inattendue."
+            : `Erreur HTTP ${response.status}. ${responseText.slice(0, 200)}`
+        );
+      }
+
+      if (!response.ok) {
+        const detail = data?.detail;
+
+        throw new Error(
+          typeof detail === "string"
+            ? detail
+            : `Le serveur a renvoyé une erreur HTTP ${response.status}.`
+        );
+      }
+
+      if (typeof data?.analysis !== "string" || !data.analysis.trim()) {
+        throw new Error(
+          "La réponse du serveur ne contient pas le rapport d'analyse."
+        );
+      }
+
+      setAnalysis(data.analysis);
+    } catch (err) {
+      console.error("Erreur pendant l'analyse :", err);
+
+      if (err instanceof TypeError) {
+        setError(
+          "Impossible de joindre l'API. Vérifiez l'URL du backend, " +
+            "la configuration CORS et la disponibilité du serveur. " +
+            "Consultez F12 > Console et F12 > Network pour plus de détails."
+        );
+      } else {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Une erreur inattendue est survenue."
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
   }
-}
 
   return (
     <div className="app">
       <header className="navbar">
         <a className="brand" href="#accueil">
           <span className="brand-icon">A</span>
-          <span>ATS<span className="brand-light"> Intelligence</span></span>
+          <span>
+            ATS<span className="brand-light"> Intelligence</span>
+          </span>
         </a>
 
         <nav>
@@ -88,7 +167,7 @@ function App() {
         <section className="hero" id="accueil">
           <div className="hero-badge">
             <span className="status-dot"></span>
-            INTELLIGENCE ARTIFICIELLE & RECRUTEMENT
+            INTELLIGENCE ARTIFICIELLE &amp; RECRUTEMENT
           </div>
 
           <h1>
@@ -124,6 +203,7 @@ function App() {
                 lancer l'évaluation.
               </p>
             </div>
+
             <span className="step-indicator">ÉTAPE 01 / 02</span>
           </div>
 
@@ -138,9 +218,7 @@ function App() {
                   </div>
                 </div>
 
-                <label htmlFor="job">
-                  Description du poste
-                </label>
+                <label htmlFor="job">Description du poste</label>
 
                 <textarea
                   id="job"
@@ -168,52 +246,45 @@ function App() {
                   </div>
                 </div>
 
-                <label htmlFor="cv-upload">
-                  Importer un document
-                </label>
+                <label htmlFor="cv-upload">Importer un document</label>
 
                 <label className="upload-zone" htmlFor="cv-upload">
                   <span className="upload-icon">↑</span>
+
                   <strong>
                     {cv ? cv.name : "Déposez votre CV ici"}
                   </strong>
+
                   <span>
                     {cv
                       ? `${(cv.size / 1024).toFixed(0)} Ko`
                       : "ou cliquez pour parcourir vos fichiers"}
                   </span>
-                  <span className="file-format">
-                    PDF · 10 Mo maximum
-                  </span>
+
+                  <span className="file-format">PDF · 10 Mo maximum</span>
 
                   <input
                     id="cv-upload"
                     type="file"
                     accept=".pdf,application/pdf"
-                    onChange={(event) => {
-                      const selectedFile =
-                        event.target.files?.[0];
-
-                      if (!selectedFile) return;
-
-                      if (
-                        selectedFile.type !== "application/pdf" ||
-                        selectedFile.size > 10 * 1024 * 1024
-                      ) {
-                        setCv(null);
-                        setError(
-                          "Choisissez un PDF valide de 10 Mo maximum."
-                        );
-                        event.target.value = "";
-                        return;
-                      }
-
-                      setError("");
-                      setCv(selectedFile);
-                    }}
+                    onChange={handleFileChange}
                     hidden
                   />
                 </label>
+
+                {cv && (
+                  <button
+                    type="button"
+                    className="remove-file-button"
+                    onClick={() => {
+                      setCv(null);
+                      const input = document.getElementById("cv-upload");
+                      if (input) input.value = "";
+                    }}
+                  >
+                    Retirer le CV
+                  </button>
+                )}
 
                 <div className="upload-note">
                   <span>🔒</span>
@@ -242,9 +313,7 @@ function App() {
                 type="submit"
                 disabled={loading}
               >
-                {loading
-                  ? "Analyse en cours..."
-                  : "Lancer l'analyse →"}
+                {loading ? "Analyse en cours..." : "Lancer l'analyse →"}
               </button>
             </div>
           </form>
@@ -254,10 +323,12 @@ function App() {
           <section className="results-section">
             <span className="eyebrow">RAPPORT D'ANALYSE</span>
             <h2>Résultats de l'évaluation</h2>
+
             <p className="results-note">
               Analyse générée par IA. Les conclusions doivent
               être vérifiées par un recruteur.
             </p>
+
             <article className="results-card">
               <pre>{analysis}</pre>
             </article>
@@ -265,7 +336,7 @@ function App() {
         )}
 
         <section className="how-section" id="fonctionnement">
-          <span className="eyebrow">SIMPLE & RAPIDE</span>
+          <span className="eyebrow">SIMPLE &amp; RAPIDE</span>
           <h2>Comment ça fonctionne ?</h2>
 
           <div className="how-grid">
@@ -273,8 +344,7 @@ function App() {
               <span>01</span>
               <h3>Décrivez le poste</h3>
               <p>
-                Indiquez les missions et les compétences
-                recherchées.
+                Indiquez les missions et les compétences recherchées.
               </p>
             </article>
 
@@ -301,9 +371,14 @@ function App() {
       <footer className="footer">
         <a className="brand" href="#accueil">
           <span className="brand-icon">A</span>
-          <span>ATS<span className="brand-light"> Intelligence</span></span>
+          <span>
+            ATS<span className="brand-light"> Intelligence</span>
+          </span>
         </a>
-        <span>© 2026 · Analyse assistée par intelligence artificielle</span>
+
+        <span>
+          © 2026 · Analyse assistée par intelligence artificielle
+        </span>
       </footer>
     </div>
   );

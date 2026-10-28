@@ -153,12 +153,9 @@ GEMINI_MODEL=gemma-4-26b-a4b-it
 - GEMINI_MODEL : identifiant du modèle à utiliser. Le code fourni utilise cette valeur par défaut si la variable est absente.
 Vérifiez que le modèle configuré est accessible et pris en charge par votre compte et l'API utilisée. Si nécessaire, remplacez-le par un modèle disponible. Ne partagez jamais le fichier .env et n'insérez jamais la clé API dans le frontend React.
 Frontend : URL de l'API
-Dans la version de base, l'URL de l'API est écrite directement dans src/App.jsx :
-fetch("http://127.0.0.1:8000/api/analyze", {
-  method: "POST",
-  body: formData,
-});
-Si le projet est déployé ou si le backend utilise une autre adresse, mettez cette URL à jour. Une amélioration recommandée consiste à utiliser une variable de configuration telle que VITE_API_URL côté frontend. Les variables préfixées par VITE_ sont exposées au navigateur : n'y stockez aucun secret.
+En développement, le frontend utilise par défaut `http://127.0.0.1:8000`. Pour une autre adresse, créez `ats-intelligence-frontend/.env.local` :
+VITE_API_URL=http://127.0.0.1:8000
+En production, définissez `VITE_API_URL` dans les variables d'environnement de la plateforme frontend avec l'URL publique du backend, puis reconstruisez/redéployez le frontend. Cette URL doit être accessible depuis le navigateur et autorisée par CORS côté backend. Les variables préfixées par `VITE_` sont exposées au navigateur : n'y stockez aucun secret.
 CORS
 Le backend doit autoriser l'origine exacte utilisée par le frontend. En développement, la configuration peut inclure :
 app.add_middleware(
